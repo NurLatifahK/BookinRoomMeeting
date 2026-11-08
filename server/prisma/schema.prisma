@@ -1,0 +1,85 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  username  String    @unique
+  password  String
+  name      String
+  pn        String    @unique
+  role      String    @default("PEGAWAI") // "ADMIN" or "PEGAWAI"
+  division  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+  approvals Booking[] @relation("ApprovedBy")
+}
+
+model Room {
+  id          String    @id @default(uuid())
+  name        String
+  floor       Int
+  code        String    @unique
+  capacity    Int       @default(10)
+  facilities  String    @default("Smart TV, High-speed Wi-Fi, Whiteboard, Video Conference")
+  status      String    @default("AVAILABLE") // "AVAILABLE" or "MAINTENANCE"
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  bookings    Booking[]
+}
+
+model Booking {
+  id              String    @id @default(uuid())
+  title           String
+  description     String?
+
+  // Pegawai info
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employeeName    String
+  employeePn      String
+
+  // Room info
+  roomId          String
+  room            Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  // Waktu booking (1 hari)
+  date            String    // Format: YYYY-MM-DD (tanggal mulai / satu-satunya tanggal)
+  startTime       String    // Format: HH:mm
+  duration        Int       // 1, 2, 3, 4, 5, 6, 8
+  endTime         String    // Format: HH:mm
+
+  // Multi-day booking fields
+  isMultiDay      Boolean   @default(false)
+  endDate         String?   // Format: YYYY-MM-DD (tanggal terakhir, null jika 1 hari)
+  totalDays       Int       @default(1)
+
+  // Nota Dinas (wajib untuk multi-day)
+  notaDinasPath         String?   // Path file di server
+  notaDinasOriginalName String?   // Nama file asli
+
+  // Approval (hanya untuk multi-day)
+  approvalStatus  String    @default("NOT_REQUIRED") // NOT_REQUIRED | PENDING | APPROVED | REJECTED
+  approvedByUserId String?
+  approvedBy      User?     @relation("ApprovedBy", fields: [approvedByUserId], references: [id])
+  approvedAt      DateTime?
+  rejectionReason String?
+
+  // Status umum
+  status          String    @default("CONFIRMED") // CONFIRMED | PENDING_APPROVAL | CANCELLED | REJECTED
+  cancelledReason String?
+  cancelledAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([roomId, date])
+  @@index([userId])
+  @@index([approvalStatus])
+}

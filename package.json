@@ -1,0 +1,12 @@
+{
+  "name": "bank-raya-meeting-room-booking",
+  "version": "1.0.0",
+  "description": "Bank Raya Internal Meeting Room Booking System",
+  "scripts": {
+    "dev": "node start-dev.js",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "db:init": "cd server && npx prisma db push && npx tsx prisma/seed.ts",
+    "build": "cd server && npm run build && cd ../client && npm run build"
+  }
+}

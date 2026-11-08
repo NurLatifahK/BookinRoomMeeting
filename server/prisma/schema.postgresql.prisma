@@ -1,0 +1,60 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  username  String    @unique
+  password  String
+  name      String
+  pn        String    @unique
+  role      String    @default("PEGAWAI") // "ADMIN" or "PEGAWAI"
+  division  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+}
+
+model Room {
+  id          String    @id @default(uuid())
+  name        String    // e.g. "Meeting Room 1"
+  floor       Int       // 12, 15, 16, 17, 19
+  code        String    @unique // e.g. "MR-12-1"
+  capacity    Int       @default(10)
+  facilities  String    @default("Smart TV, High-speed Wi-Fi, Whiteboard, Video Conference")
+  status      String    @default("AVAILABLE") // "AVAILABLE" or "MAINTENANCE"
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  bookings    Booking[]
+}
+
+model Booking {
+  id              String    @id @default(uuid())
+  title           String
+  description     String?
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employeeName    String
+  employeePn      String
+  roomId          String
+  room            Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  date            String    // Format: YYYY-MM-DD
+  startTime       String    // Format: HH:mm (e.g. "09:00")
+  duration        Int       // 1, 2, 3, 4, 5, 6, 8
+  endTime         String    // Format: HH:mm (e.g. "11:00")
+  status          String    @default("CONFIRMED") // "CONFIRMED", "CANCELLED", "COMPLETED"
+  cancelledReason String?
+  cancelledAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([roomId, date])
+  @@index([userId])
+}
+
